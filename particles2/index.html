@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Particles2</title>
+  <meta charset="utf-8">
+</head>
+<body style="margin: 0; overflow: hidden;">
+ 
+  <script src="../three.min.js"></script>
+ 
+  <script>
+
+  /* Code started from tutorial at
+     http://code.tutsplus.com/tutorials/webgl-with-threejs-textures-particles--net-35836
+  */
+ 
+  var scene, camera, renderer, cube, particles, particleCount, particleSystem, smokeParticles;
+ 
+  init();
+  createCube();
+  createParticles();
+  createSmoke();
+  animate();
+
+  function init() {
+ 
+    scene = new THREE.Scene();
+    var WIDTH = window.innerWidth,
+        HEIGHT = window.innerHeight;
+ 
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(WIDTH, HEIGHT);
+    document.body.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 20000);
+    camera.position.set(0,6,0);
+
+    camera.position.y = 30;
+    camera.position.z = 400;
+
+    scene.add(camera);
+
+    window.addEventListener('resize', function() {
+      var WIDTH = window.innerWidth,
+          HEIGHT = window.innerHeight;
+      renderer.setSize(WIDTH, HEIGHT);
+      camera.aspect = WIDTH / HEIGHT;
+      camera.updateProjectionMatrix();
+    });
+
+    //renderer.setClearColor(0x000000, 1);
+
+    var pointLight = new THREE.PointLight(0xffffff);
+    pointLight.position.set(100, 300, 400);
+     
+    scene.add(pointLight);
+  }
+
+  function createCube() {
+    var cubeGeometry = new THREE.CubeGeometry(100, 100, 100);
+
+    var cubeTexture = THREE.ImageUtils.loadTexture('box.png');
+
+    //1 material on all sides:
+    //var cubeMaterial = new THREE.MeshLambertMaterial({ map: cubeTexture });
+    //cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+
+    //different material for each side:
+    var materials = [];
+    materials.push(new THREE.MeshLambertMaterial({ map: cubeTexture, color: 0xff0000 })); // right face
+    materials.push(new THREE.MeshLambertMaterial({ map: cubeTexture, color: 0xffff00 })); // left face
+    materials.push(new THREE.MeshLambertMaterial({ map: cubeTexture, color: 0xffffff })); // top face
+    materials.push(new THREE.MeshLambertMaterial({ map: cubeTexture, color: 0x00ffff })); // bottom face
+    materials.push(new THREE.MeshLambertMaterial({ map: cubeTexture, color: 0x0000ff })); // front face
+    materials.push(new THREE.MeshLambertMaterial({ map: cubeTexture, color: 0xff00ff })); // back face
+
+    var cubeMaterial = new THREE.MeshFaceMaterial(materials);
+
+    cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+
+    cube.rotation.y = Math.PI * 45 / 180;
+ 
+    scene.add(cube);
+  }
+
+  function createParticles() {
+    particleCount = 2000;
+
+    particles = new THREE.Geometry;
+
+    for (var p = 0; p < particleCount; p++) {
+      var pX = Math.random() * 500 - 250,
+          pY = Math.random() * 500 - 250,
+          pZ = Math.random() * 500 - 250,
+          particle = new THREE.Vector3(pX, pY, pZ);
+      particles.vertices.push(particle);
+    }
+
+    //plain white dots:
+    //var particleMaterial = new THREE.ParticleBasicMaterial({ color: 0xeeeeee, size: 2 });
+
+    //snowflake image:
+    var particleTexture = THREE.ImageUtils.loadTexture('snowflake.png');
+    var particleMaterial = new THREE.ParticleBasicMaterial({ map: particleTexture, transparent: true, size: 5 });
+
+    particleSystem = new THREE.ParticleSystem(particles, particleMaterial);
+ 
+    scene.add(particleSystem);
+  }
+
+  function createSmoke() {
+    smokeParticles = new THREE.Geometry;
+    
+    for (var i = 0; i < 300; i++) {
+      var pX = Math.random() * 32 - 16,
+          pY = Math.random() * 230,
+          pZ = Math.random() * 32 - 16,
+          particle = new THREE.Vector3(pX, pY, pZ);
+      
+      smokeParticles.vertices.push(particle);
+    }
+
+    var smokeTexture = THREE.ImageUtils.loadTexture('./smoke.png');
+    var smokeMaterial = new THREE.ParticleBasicMaterial({ map: smokeTexture, transparent: true, blending: THREE.AdditiveBlending, size: 50, color: 0x111111 });
+
+    var smoke = new THREE.ParticleSystem(smokeParticles, smokeMaterial);
+    smoke.sortParticles = true;
+    smoke.position.x = -150;
+     
+    scene.add(smoke);
+  }
+
+  function animate() {
+
+    cube.rotation.y += 0.01;
+    cube.rotation.z += 0.01;
+    cube.rotation.x += 0.005;
+
+    //snowflakes
+    particleSystem.rotation.y -= 0.01;
+
+    var particleCount = smokeParticles.vertices.length;
+    while (particleCount--) {
+        var particle = smokeParticles.vertices[particleCount];
+        particle.y += 0.004 * 50;
+         
+        if (particle.y >= 230) {
+            particle.y = Math.random() * 16;
+            particle.x = Math.random() * 32 - 16;
+            particle.z = Math.random() * 32 - 16;
+        }
+    }
+
+    //this isn't needed since we set sortParticles = true
+    //smokeParticles.__dirtyVertices = true;
+
+    renderer.render(scene, camera);
+
+    requestAnimationFrame(animate);
+  }
+ 
+  </script>
+ 
+</body>
+</html>

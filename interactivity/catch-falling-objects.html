@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>catch falling objects</title>
+  <meta charset="utf-8">
+  <style>
+  #hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: rgba(50, 50, 50, 0.7);
+    width: 120px;
+    height: 50px;
+
+    padding: 20px;
+
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+    font-size: 20pt;
+    color: #FFF;
+  }
+  </style>
+</head>
+<body style="margin: 0; overflow: hidden;">
+ 
+  <script src="../three.min.js"></script>
+  <script src="Detector.js"></script>
+  <script src="TweenMax.min.js"></script>
+ 
+  <script>
+
+  var scene, camera, projector, renderer, cube1, cube2, cube3;
+
+  var fallingObjects = [];
+
+  var torus;
+ 
+  if (Detector.webgl) {
+    init();
+    
+    initGame();
+
+  } else if (Detector.canvas) {
+    document.body.innerHTML = "No WebGL but we can fall back to canvas.";
+  } else {
+    document.body.innerHTML = "No Canvas, fall back to flash or static.";
+  }
+
+  function init() {
+ 
+    scene = new THREE.Scene();
+    var WIDTH = window.innerWidth,
+        HEIGHT = window.innerHeight;
+ 
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(WIDTH, HEIGHT);
+    document.body.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 20000);
+    camera.position.set(0,6,0);
+
+    camera.position.y = 30;
+    camera.position.z = 400;
+
+    scene.add(camera);
+
+    projector = new THREE.Projector();
+
+    window.addEventListener('resize', function() {
+      var WIDTH = window.innerWidth,
+          HEIGHT = window.innerHeight;
+      renderer.setSize(WIDTH, HEIGHT);
+      camera.aspect = WIDTH / HEIGHT;
+      camera.updateProjectionMatrix();
+    });
+
+    renderer.setClearColor(0x222222, 1);
+
+    var pointLight = new THREE.PointLight(0xffffff);
+    pointLight.position.set(0, 0, 200);
+     
+    scene.add(pointLight);
+  }
+
+
+  function initGame() {
+    cube1 = createCube(0, 0, 0, 0xff0000);
+
+    fallingObjects.push(cube1);
+
+    fallCubes();
+
+    createBasket();
+
+    animate();
+  }
+
+  function createCube(x, y, z, color) {
+    var cubeGeometry = new THREE.CubeGeometry(10, 10, 10);
+
+    var cubeMaterial = new THREE.MeshLambertMaterial({color: color});
+    var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+
+    cube.rotation.y = Math.PI * 45 / 180;
+
+    cube.position.x = x;
+    cube.position.y = y;
+    cube.position.z = z;
+ 
+    scene.add(cube);
+
+    return cube;
+  }
+
+  function animate() {
+    var cube;
+    for (var i = 0; i < fallingObjects.length; i++) {
+      cube = fallingObjects[i];
+      
+      //spin
+      cube.rotation.y += 0.01;
+      cube.rotation.z += 0.01;
+      cube.rotation.x += 0.005;
+    }
+
+    //spin
+    /*
+    torus.rotation.y -= 0.2;
+    torus.rotation.z -= 0.2;
+    torus.rotation.x -= 0.1; */
+
+    renderer.render(scene, camera);
+
+    requestAnimationFrame(animate);
+  }
+
+  function fallCubes() {
+    for (var i = 0; i < fallingObjects.length; i++) {
+      cube = fallingObjects[i];
+      
+      //fall
+      fallCube(cube);
+    }
+  }
+
+  function fallCube(cube) {
+    cube.position.x = Math.random() * 500 - 250;
+    cube.position.y = 200;
+
+    TweenMax.to(cube.position, Math.random() * 2 + 0.5, {y: -200, ease: Quad.easeIn, onComplete: fallCube, onCompleteParams: [cube]});
+  }
+
+  function createBasket() {
+    var geometry = new THREE.TorusGeometry( 30, 5, 16, 100 );
+    var material = new THREE.MeshBasicMaterial( { color: 0x009999 } );
+    torus = new THREE.Mesh( geometry, material );
+
+    torus.rotation.x = -80;
+    torus.position.y = -100;
+    scene.add( torus );
+
+    document.addEventListener("mousemove", onMouseMove);
+
+    function onMouseMove(evt) {
+      TweenMax.to(torus.position, 0.25, {x: evt.x - window.innerWidth / 2});
+    }
+  }
+
+  function animateCameraTowardsCube(cube) {
+    var targetCameraPosition = {x: cube.position.x, y: cube.position.y + 30, z: cube.position.z + 400};
+
+    TweenMax.to(camera.position, 2, targetCameraPosition);
+  }
+ 
+  </script>
+
+
+  <div id="hud">
+    <span id="score">0</span>
+  </div>
+ 
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Particles2</title>
+  <meta charset="utf-8">
+</head>
+<body style="margin: 0; overflow: hidden;">
+ 
+  <script src="../three.min.js"></script>
+  <script src="Detector.js"></script>
+ 
+  <script>
+
+  var scene, camera, renderer, cube;
+ 
+  if (Detector.webgl) {
+    init();
+    createCube();
+    animate();
+  } else if (Detector.canvas) {
+    document.body.innerHTML = "No WebGL but we can fall back to canvas.";
+  } else {
+    document.body.innerHTML = "No Canvas, fall back to flash or static.";
+  }
+
+  function init() {
+ 
+    scene = new THREE.Scene();
+    var WIDTH = window.innerWidth,
+        HEIGHT = window.innerHeight;
+ 
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(WIDTH, HEIGHT);
+    document.body.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 20000);
+    camera.position.set(0,6,0);
+
+    camera.position.y = 30;
+    camera.position.z = 400;
+
+    scene.add(camera);
+
+    window.addEventListener('resize', function() {
+      var WIDTH = window.innerWidth,
+          HEIGHT = window.innerHeight;
+      renderer.setSize(WIDTH, HEIGHT);
+      camera.aspect = WIDTH / HEIGHT;
+      camera.updateProjectionMatrix();
+    });
+
+    renderer.setClearColor(0x222222, 1);
+
+    var pointLight = new THREE.PointLight(0xffffff);
+    pointLight.position.set(0, 0, 200);
+     
+    scene.add(pointLight);
+  }
+
+  function createCube() {
+    var cubeGeometry = new THREE.CubeGeometry(100, 100, 100);
+
+    var cubeMaterial = new THREE.MeshLambertMaterial({color: 0x00DD00});
+    cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+
+    cube.rotation.y = Math.PI * 45 / 180;
+ 
+    scene.add(cube);
+  }
+
+  function animate() {
+
+    cube.rotation.y += 0.01;
+    cube.rotation.z += 0.01;
+    cube.rotation.x += 0.005;
+
+    renderer.render(scene, camera);
+
+    requestAnimationFrame(animate);
+  }
+ 
+  </script>
+ 
+</body>
+</html>

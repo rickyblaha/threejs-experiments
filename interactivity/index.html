@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>interactivity, detector, tweenmax</title>
+  <meta charset="utf-8">
+</head>
+<body style="margin: 0; overflow: hidden;">
+ 
+  <script src="../three.min.js"></script>
+  <script src="Detector.js"></script>
+  <script src="TweenMax.min.js"></script>
+ 
+  <script>
+
+  var scene, camera, projector, renderer, cube1, cube2, cube3;
+
+  var objects = [];
+ 
+  if (Detector.webgl) {
+    init();
+    
+    cube1 = createCube(0, 0, 0, 0xff0000);
+    cube2 = createCube(500, 500, -2000, 0x00ff00);
+    cube3 = createCube(1000, 500, -4000, 0x0000ff);
+
+    cube1.nextCube = cube2;
+    cube2.nextCube = cube3;
+    cube3.nextCube = cube1;
+
+    addInteractivity();
+    animate();
+  } else if (Detector.canvas) {
+    document.body.innerHTML = "No WebGL but we can fall back to canvas.";
+  } else {
+    document.body.innerHTML = "No Canvas, fall back to flash or static.";
+  }
+
+  function init() {
+ 
+    scene = new THREE.Scene();
+    var WIDTH = window.innerWidth,
+        HEIGHT = window.innerHeight;
+ 
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(WIDTH, HEIGHT);
+    document.body.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 20000);
+    camera.position.set(0,6,0);
+
+    camera.position.y = 30;
+    camera.position.z = 400;
+
+    scene.add(camera);
+
+    projector = new THREE.Projector();
+
+    window.addEventListener('resize', function() {
+      var WIDTH = window.innerWidth,
+          HEIGHT = window.innerHeight;
+      renderer.setSize(WIDTH, HEIGHT);
+      camera.aspect = WIDTH / HEIGHT;
+      camera.updateProjectionMatrix();
+    });
+
+    renderer.setClearColor(0x222222, 1);
+
+    var pointLight = new THREE.PointLight(0xffffff);
+    pointLight.position.set(0, 0, 200);
+     
+    scene.add(pointLight);
+  }
+
+  function createCube(x, y, z, color) {
+    var cubeGeometry = new THREE.CubeGeometry(100, 100, 100);
+
+    var cubeMaterial = new THREE.MeshLambertMaterial({color: color});
+    var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+
+    cube.rotation.y = Math.PI * 45 / 180;
+
+    cube.position.x = x;
+    cube.position.y = y;
+    cube.position.z = z;
+ 
+    scene.add(cube);
+
+    objects.push(cube);
+
+    return cube;
+  }
+
+  function addInteractivity() {
+    document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+
+    function onDocumentMouseDown( event ) {
+
+        event.preventDefault();
+
+        var vector = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1, 0.5 );
+        projector.unprojectVector( vector, camera );
+
+        var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+        var intersects = raycaster.intersectObjects( objects );
+
+        if ( intersects.length > 0 ) {
+
+          animateCameraTowardsCube( intersects[0].object.nextCube );
+
+        }
+      }
+  }
+
+  function animate() {
+    var cube;
+    for (var i = 0; i < objects.length; i++) {
+      cube = objects[i];
+      cube.rotation.y += 0.01;
+      cube.rotation.z += 0.01;
+      cube.rotation.x += 0.005;
+    }
+
+    renderer.render(scene, camera);
+
+    requestAnimationFrame(animate);
+  }
+
+  function animateCameraTowardsCube(cube) {
+    var targetCameraPosition = {x: cube.position.x, y: cube.position.y + 30, z: cube.position.z + 400};
+
+    TweenMax.to(camera.position, 2, targetCameraPosition);
+  }
+ 
+  </script>
+ 
+</body>
+</html>
